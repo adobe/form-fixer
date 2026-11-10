@@ -1,0 +1,49 @@
+<?xpacket begin="﻿" id="W5M0MpCehiHzreSzNTczkc9d"?>
+<x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe XMP Core 10.0-c000 25.G.ef72e4e, 2025/06/27-18:54:05        ">
+   <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+      <rdf:Description rdf:about=""
+            xmlns:dc="http://purl.org/dc/elements/1.1/"
+            xmlns:xmp="http://ns.adobe.com/xap/1.0/"
+            xmlns:xmpMM="http://ns.adobe.com/xap/1.0/mm/"
+            xmlns:stEvt="http://ns.adobe.com/xap/1.0/sType/ResourceEvent#"
+            xmlns:stRef="http://ns.adobe.com/xap/1.0/sType/ResourceRef#"
+            xmlns:ffx="http://ns.adobe.com/formfixer/1.0/"
+            xmlns:pdf="http://ns.adobe.com/pdf/1.3/">
+         <dc:format>application/pdf</dc:format>
+         <dc:title>
+            <rdf:Alt>
+               <rdf:li xml:lang="x-default">Student Request Form</rdf:li>
+            </rdf:Alt>
+         </dc:title>
+         <xmp:CreateDate>2026-10-19T12:36:22-04:00</xmp:CreateDate>
+         <xmp:MetadataDate>2026-10-19T12:36:22-04:00</xmp:MetadataDate>
+         <xmp:ModifyDate>2026-10-19T12:36:22-04:00</xmp:ModifyDate>
+         <xmp:CreatorTool>Adobe InDesign 21.3 (Macintosh)</xmp:CreatorTool>
+         <xmpMM:InstanceID>uuid:1ad7fca6-7cb6-7548-bbbe-4ff9a3a430e0</xmpMM:InstanceID>
+         <xmpMM:OriginalDocumentID>xmp.did:b9fdb3b2-fa94-4eb0-a139-8e7e819243ea</xmpMM:OriginalDocumentID>
+         <xmpMM:DocumentID>xmp.id:00d475f9-037e-473e-b53d-d036817e7705</xmpMM:DocumentID>
+         <xmpMM:RenditionClass>proof:pdf</xmpMM:RenditionClass>
+         <xmpMM:History>
+            <rdf:Seq>
+               <rdf:li rdf:parseType="Resource">
+                  <stEvt:action>converted</stEvt:action>
+                  <stEvt:parameters>from application/x-indesign to application/pdf</stEvt:parameters>
+                  <stEvt:softwareAgent>Adobe InDesign 21.3 (Macintosh)</stEvt:softwareAgent>
+                  <stEvt:changed>/</stEvt:changed>
+                  <stEvt:when>2026-10-19T12:36:22-04:00</stEvt:when>
+               </rdf:li>
+            </rdf:Seq>
+         </xmpMM:History>
+         <xmpMM:DerivedFrom rdf:parseType="Resource">
+            <stRef:instanceID>xmp.iid:861eebbd-5d84-4484-91fa-52f05c4577cf</stRef:instanceID>
+            <stRef:documentID>xmp.did:b9fdb3b2-fa94-4eb0-a139-8e7e819243ea</stRef:documentID>
+            <stRef:originalDocumentID>xmp.did:b9fdb3b2-fa94-4eb0-a139-8e7e819243ea</stRef:originalDocumentID>
+            <stRef:renditionClass>default</stRef:renditionClass>
+         </xmpMM:DerivedFrom>
+         <ffx:config>{"version":1,"fields":{"Agree":{"textColor":{"name":"Red","rgb":[204,0,51]}},"School":{"children":{"field":"Combo Box 1","placeholder":"Select one","map":{"Arts and Sciences":["Biology","History","Physics"],"Engineering":["Civil","Electrical","Mechanical"]}}},"Zip code":{"limit":5,"comb":true,"actions":{"Keystroke":"if (!event.willCommit) event.rc = /^\\d*$/.test(event.change);"}},"Year":{"editable":true,"exportValues":{"First year":"1","Second year":"2"}},"Town":{"defaultValue":"New Brunswick","actions":{"Calculate":"AFSimple_Calculate(\"SUM\", new Array (\"Zip code\", \"Student ID\"));","Format":"event.value = event.value.toUpperCase(); // \"quotes\" &amp; &lt;tags&gt;"}},"Student ID":{"limit":9,"comb":true,"align":"center","textColor":{"name":"Red","rgb":[204,0,51]}}}}</ffx:config>
+         <pdf:Producer>Adobe PDF Library 18.0</pdf:Producer>
+         <pdf:Trapped>False</pdf:Trapped>
+      </rdf:Description>
+   </rdf:RDF>
+</x:xmpmeta>
+<?xpacket end="r"?>
