@@ -10,7 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-// Form Fixer for InDesign, version 1.0.0
+// Form Fixer for InDesign, version 1.0.1
 // Adds PDF form settings InDesign can't create on its own: comb fields,
 // character limits, text alignment and color, and field JavaScript.
 // Settings are stored in the document and exported into the PDF's metadata.
@@ -22,7 +22,9 @@ var FFX = $.global.FFX || {};
 $.global.FFX = FFX;
 
 FFX.NS = "http://ns.adobe.com/formfixer/1.0/";
-FFX.VERSION = "1.0.0";
+// Files saved before 1.0.0 used this namespace. Sync clears it.
+FFX.LEGACY_NS = "http://ns.dsian.local/formfix/1.0/";
+FFX.VERSION = "1.0.1";
 FFX.PREFIX = "ffx";
 FFX.PROP = "ffx:config";
 FFX.LABEL = "ffx";
@@ -173,6 +175,8 @@ FFX.registerNamespace = function () {
     XMPMeta.registerNamespace(FFX.NS, FFX.PREFIX);
     // If another version already claimed the prefix this session, XMP assigns a different one.
     FFX.PROP = XMPMeta.getNamespacePrefix(FFX.NS).replace(/:?$/, ":") + "config";
+    XMPMeta.registerNamespace(FFX.LEGACY_NS, "ffxold");
+    FFX.LEGACY_PROP = XMPMeta.getNamespacePrefix(FFX.LEGACY_NS).replace(/:?$/, ":") + "config";
 };
 
 // Rebuilds the document metadata from the settings stored on each field,
@@ -188,6 +192,9 @@ FFX.sync = function (doc) {
     var value = n ? FFX.stringify(cfg) : "";
     if (doc.metadataPreferences.getProperty(FFX.NS, FFX.PROP) !== value) {
         doc.metadataPreferences.setProperty(FFX.NS, FFX.PROP, value);
+    }
+    if (doc.metadataPreferences.getProperty(FFX.LEGACY_NS, FFX.LEGACY_PROP) !== "") {
+        doc.metadataPreferences.setProperty(FFX.LEGACY_NS, FFX.LEGACY_PROP, "");
     }
     return n;
 };

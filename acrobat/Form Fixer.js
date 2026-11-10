@@ -10,7 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-// Form Fixer for Acrobat, version 1.0.0
+// Form Fixer for Acrobat, version 1.0.1
 // Applies the form settings saved by the InDesign "Form Fixer" script:
 // comb fields, character limits, default values, export values, custom dropdown entry, calculations, text alignment and color, field JavaScript, and dependent dropdowns.
 //
@@ -20,6 +20,8 @@ governing permissions and limitations under the License.
 // run it, then run: FFX_apply(this);
 
 var FFX_NS = "http://ns.adobe.com/formfixer/1.0/";
+// Files exported before 1.0.0 used this namespace.
+var FFX_LEGACY_NS = "http://ns.dsian.local/formfix/1.0/";
 
 function FFX_unescapeXml(s) {
     return s.replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, "\"")
@@ -30,8 +32,12 @@ function FFX_unescapeXml(s) {
 
 function FFX_readConfig(xmp) {
     if (!xmp) return null;
+    return FFX_readConfigIn(xmp, FFX_NS) || FFX_readConfigIn(xmp, FFX_LEGACY_NS);
+}
+
+function FFX_readConfigIn(xmp, ns) {
     var nsRe = /xmlns:([\w.-]+)\s*=\s*["']([^"']+)["']/g, m, prefix = null;
-    while ((m = nsRe.exec(xmp)) !== null) if (m[2] === FFX_NS) { prefix = m[1]; break; }
+    while ((m = nsRe.exec(xmp)) !== null) if (m[2] === ns) { prefix = m[1]; break; }
     if (!prefix) return null;
     var p = prefix.replace(/\./g, "\\.");
     var el = new RegExp("<" + p + ":config(?:\\s[^>]*)?>([\\s\\S]*?)</" + p + ":config>").exec(xmp);
