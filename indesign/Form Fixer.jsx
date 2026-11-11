@@ -133,6 +133,7 @@ FFX.clean = function (s) {
     if (s.editable === true) out.editable = true;
     if (typeof s.defaultValue === "string" && s.defaultValue !== "") out.defaultValue = s.defaultValue;
     if (s.textColor && s.textColor.rgb && s.textColor.rgb.length === 3) out.textColor = { name: s.textColor.name, rgb: s.textColor.rgb };
+    if (s.focus && s.focus.rgb && s.focus.rgb.length === 3) out.focus = { name: s.focus.name, rgb: s.focus.rgb };
     if (s.actions) {
         var acts = {};
         for (var k in s.actions) if (s.actions.hasOwnProperty(k) && FFX.trim(s.actions[k]) !== "") acts[k] = s.actions[k];
@@ -516,6 +517,19 @@ FFX.showDialog = function (doc, autoClose) {
     if (!calcChecks.length) calcPanel.add("statictext", undefined, "This document has no other fields to add up.");
     calcPanel.add("statictext", undefined, "Tip: make the total field read only and give it a number format.");
 
+    var focusPanel = section("Focus");
+    focusPanel.alignChildren = ["left", "top"];
+    var focusRow = focusPanel.add("group");
+    focusRow.add("statictext", undefined, "Focus highlight:");
+    var focusList = focusRow.add("dropdownlist", undefined, []);
+    focusList.preferredSize.width = 240;
+    focusList.helpTip = "Focus highlight color";
+    var focusContrast = focusPanel.add("statictext", undefined, "", { truncate: "end" });
+    focusContrast.preferredSize.width = 520;
+    focusPanel.add("statictext", undefined, "Adds a thick border inside the field while it has keyboard focus.", { multiline: true }).preferredSize.width = 520;
+    focusPanel.add("statictext", undefined, "Works in Acrobat and Acrobat Reader. Most browser PDF viewers ignore it.", { multiline: true }).preferredSize.width = 520;
+    var focusChoices = [];
+
     var jsPanel = section("JavaScript");
     jsPanel.alignChildren = ["fill", "top"];
     var trigRow = jsPanel.add("group");
@@ -609,6 +623,16 @@ FFX.showDialog = function (doc, autoClose) {
             var ci = colorList.selection ? colorList.selection.index : 0;
             if (ci > 0 && colorChoices[ci]) s.textColor = { name: colorChoices[ci].name, rgb: colorChoices[ci].rgb }; else delete s.textColor;
         }
+        var fi = focusList.selection ? focusList.selection.index : 0;
+        if (fi > 0 && focusChoices[fi]) s.focus = { name: focusChoices[fi].name, rgb: focusChoices[fi].rgb }; else delete s.focus;
+    }
+
+    function refreshFocusContrast() {
+        var fi = focusList.selection ? focusList.selection.index : 0;
+        if (!cur || !fi || !focusChoices[fi]) { focusContrast.text = ""; return; }
+        var ratio = FFX.contrast(focusChoices[fi].rgb, FFX.fillRGB(byName[cur].item));
+        var shown = Math.floor(ratio * 10) / 10;
+        focusContrast.text = "Contrast with the field fill: " + shown + ":1" + (ratio < 3 ? ". Focus indicators need at least 3:1." : ".");
     }
 
     function refreshContrast() {
@@ -746,6 +770,18 @@ FFX.showDialog = function (doc, autoClose) {
         for (var cj = 0; cj < colorChoices.length; cj++) colorList.add("item", colorChoices[cj].name);
         colorList.selection = colorIdx;
         refreshContrast();
+        focusChoices = FFX.textColorChoices(doc);
+        focusChoices[0] = { name: "None", rgb: null };
+        try { var blk = FFX.swatchRGB(doc.swatches.item("Black")); if (blk) focusChoices.splice(1, 0, { name: "Black", rgb: blk }); } catch (eb) { }
+        var focusIdx = 0;
+        if (s.focus && s.focus.rgb) {
+            for (var fj = 1; fj < focusChoices.length; fj++) if (focusChoices[fj].name === s.focus.name) focusIdx = fj;
+            if (!focusIdx) { focusChoices.push({ name: s.focus.name + " (saved)", rgb: s.focus.rgb }); focusIdx = focusChoices.length - 1; }
+        }
+        focusList.removeAll();
+        for (var fk = 0; fk < focusChoices.length; fk++) focusList.add("item", focusChoices[fk].name);
+        focusList.selection = focusIdx;
+        refreshFocusContrast();
         formatPanel.enabled = isText;
         loadChoices();
         validPanel.enabled = isText;
@@ -825,6 +861,7 @@ FFX.showDialog = function (doc, autoClose) {
     alignList.onChange = function () { dirty = true; };
     defaultBox.onChanging = function () { dirty = true; };
     colorList.onChange = function () { refreshContrast(); dirty = true; };
+    focusList.onChange = function () { refreshFocusContrast(); dirty = true; };
 
     snipBtn.onClick = function () {
         if (!snipList.selection) return;

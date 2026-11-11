@@ -64,6 +64,17 @@ function FFX_dependencyCode(children) {
     ].join("\n");
 }
 
+// Acrobat has no focused appearance state, so the border changes while the field has focus.
+function FFX_focusCode(rgb) {
+    var c = ["RGB", rgb[0] / 255, rgb[1] / 255, rgb[2] / 255];
+    return "// Form Fixer: focus highlight\nevent.target.borderStyle = border.s;\nevent.target.lineWidth = 3;\nevent.target.strokeColor = " + JSON.stringify(c) + ";";
+}
+
+function FFX_blurCode(f) {
+    return "// Form Fixer: focus highlight\nevent.target.strokeColor = " + JSON.stringify(f.strokeColor) +
+        ";\nevent.target.lineWidth = " + Number(f.lineWidth) + ";\nevent.target.borderStyle = " + FFX_q(f.borderStyle) + ";";
+}
+
 function FFX_apply(doc, quiet) {
     doc = doc || this;
     var alert = quiet ? function () { } : function (m, i) { app.alert(m, i); };
@@ -125,6 +136,10 @@ function FFX_apply(doc, quiet) {
                     var start = s.children.map[f.value] || [];
                     child.setItems(s.children.placeholder ? [s.children.placeholder].concat(start) : start);
                 }
+            }
+            if (s.focus && s.focus.rgb) {
+                actions.OnFocus = FFX_focusCode(s.focus.rgb) + (actions.OnFocus ? "\n" + actions.OnFocus : "");
+                actions.OnBlur = FFX_blurCode(f) + (actions.OnBlur ? "\n" + actions.OnBlur : "");
             }
             for (var a in actions) if (actions.hasOwnProperty(a)) f.setAction(a, actions[a]);
             applied.push(name);

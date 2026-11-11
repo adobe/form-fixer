@@ -15,6 +15,7 @@ const fs = require("fs"), vm = require("vm"), assert = require("assert");
 const alerts = [];
 function makeField(name, type, value) {
   return { name, type, value, actions: {}, items: null, comb: false, charLimit: 0, multiline: true,
+    strokeColor: ["T"], lineWidth: 1, borderStyle: "solid",
     setAction(t, c) { this.actions[t] = c; }, setItems(a) { this.items = a; } };
 }
 const fields = {
@@ -61,6 +62,14 @@ assert.deepStrictEqual([...fields["Combo Box 1"].items], ["Select one"]);
 const ks = new Function("event", fields["Zip code"].actions.Keystroke);
 let e1 = { willCommit: false, change: "7", rc: true }; ks(e1); assert.strictEqual(e1.rc, true);
 let e2 = { willCommit: false, change: "a", rc: true }; ks(e2); assert.strictEqual(e2.rc, false);
+// Focus highlight: thick border on focus, original border restored on blur, user code kept
+const agree = fields["Agree"], border = { s: "solid" };
+new Function("event", "border", agree.actions.OnFocus)({ target: agree }, border);
+assert.deepStrictEqual([...agree.strokeColor], ["RGB", 0, 0.4, 0.8]); assert.strictEqual(agree.lineWidth, 3);
+assert.ok(agree.actions.OnBlur.endsWith("app.beep(0);"));
+new Function("event", "app", agree.actions.OnBlur)({ target: agree }, { beep() {} });
+assert.deepStrictEqual([...agree.strokeColor], ["T"]); assert.strictEqual(agree.lineWidth, 1);
+assert.strictEqual(fields["Town"].actions.OnFocus, undefined);
 // No settings case
 const r2 = ctx.FFX_apply({ metadata: "<x:xmpmeta/>", getField: () => null });
 assert.strictEqual(r2.applied.length, 0);
