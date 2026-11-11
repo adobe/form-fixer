@@ -12,6 +12,7 @@ Form Fixer adds PDF form settings that InDesign can't create on its own. You cho
 - **Choices:** export values for dropdowns and list boxes, and dropdowns where people can type their own answer
 - **Checks:** a number range, such as 18 to 99
 - **Totals:** sum, product, average, minimum, or maximum of other fields
+- **Focus highlight:** a colored ring that shows which field has keyboard focus, for one field or every field
 - **JavaScript:** your own code, for people who need it
 
 ## See it in action

@@ -10,7 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-// Form Fixer for Acrobat, version 1.0.1
+// Form Fixer for Acrobat, version 1.1.0
 // Applies the form settings saved by the InDesign "Form Fixer" script:
 // comb fields, character limits, default values, export values, custom dropdown entry, calculations, text alignment and color, field JavaScript, and dependent dropdowns.
 //

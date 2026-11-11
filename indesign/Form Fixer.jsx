@@ -10,7 +10,7 @@ OF ANY KIND, either express or implied. See the License for the specific languag
 governing permissions and limitations under the License.
 */
 
-// Form Fixer for InDesign, version 1.0.1
+// Form Fixer for InDesign, version 1.1.0
 // Adds PDF form settings InDesign can't create on its own: comb fields,
 // character limits, text alignment and color, and field JavaScript.
 // Settings are stored in the document and exported into the PDF's metadata.
@@ -24,7 +24,7 @@ $.global.FFX = FFX;
 FFX.NS = "http://ns.adobe.com/formfixer/1.0/";
 // Files saved before 1.0.0 used this namespace. Sync clears it.
 FFX.LEGACY_NS = "http://ns.dsian.local/formfix/1.0/";
-FFX.VERSION = "1.0.1";
+FFX.VERSION = "1.1.0";
 FFX.PREFIX = "ffx";
 FFX.PROP = "ffx:config";
 FFX.LABEL = "ffx";

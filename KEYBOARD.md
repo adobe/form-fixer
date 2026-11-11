@@ -25,7 +25,7 @@ To get back to the panel after working in the document, press the shortcut again
 In reading order:
 
 1. **Field** menu: the form field you're editing. Fields that already have settings start with a bullet.
-2. **Section** tabs: Characters, Text, Choices, Format, Validate, Calculate, and JavaScript. Only the selected section is shown.
+2. **Section** tabs: Characters, Text, Choices, Format, Validate, Calculate, Focus, and JavaScript. Only the selected section is shown.
 3. The selected section's controls.
 4. **Clear this field**, **Close**, and **Save** buttons.
 5. A status message.

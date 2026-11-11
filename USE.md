@@ -42,12 +42,14 @@ Sections that don't apply to the selected field are dimmed. For example, **Choic
 | **Format** | Ready-made formats, such as phone number, ZIP code, date, dollars, or percentage. | Format tab |
 | **Validate** | A number range, such as 18 to 99. Leave **From** or **To** empty for no limit. | Validate tab |
 | **Calculate** | Make this field the sum, product, average, minimum, or maximum of other fields. Turn on the fields to include. | Calculate tab |
+| **Focus** | A colored ring that shows which field has keyboard focus. Choose its color, width, and offset (the space between the field and the ring). **Every field in this document** sets it for the whole form. **This field** can use that setting, use its own, or have no highlight. | Actions tab (On Focus and On Blur) |
 | **JavaScript** | Your own code, or a ready-made example such as an email check. Most people won't need this. | Format, Validate, Calculate, or Actions tab |
 
 ### Good to know
 
 - **Default value** is real text in the field, not a placeholder. It stays until someone changes it, so keep the field's visible label.
 - **Text color** shows the contrast with the field's fill color. Aim for at least 4.5:1 for text and 3:1 for check marks.
+- **Focus highlight** works in Acrobat and Acrobat Reader. Most browser PDF viewers ignore it. Choose a color with at least 3:1 contrast against the page. Form Fixer shows the ratio.
 - **Calculate**: make the total field read only in the Buttons and Forms panel, and give it a number format in Form Fixer.
 - **Renaming a field:** if you rename a field in InDesign, open Form Fixer and select **Save** again before you export. Don't rename fields in Acrobat, or Form Fixer can't find them.
 
