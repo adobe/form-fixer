@@ -64,27 +64,41 @@ function FFX_dependencyCode(children) {
     ].join("\n");
 }
 
-// Acrobat has no focused appearance state, so the border changes while the field has focus.
+// Acrobat has no focused appearance state, and it won't draw a border over button artwork.
+// So each highlighted field gets a hidden ring (four thin strips) that shows while the field has focus.
 // A field's own setting wins over the document setting; { off: true } turns it off.
+var FFX_RING = "FFXFocus";
+
 function FFX_focusFor(cfg, s) {
     if (s && s.focus) return s.focus.off ? null : s.focus;
     return cfg.focus || null;
 }
 
-function FFX_focusActions(f, fs) {
-    var rgb = fs.rgb, w = fs.width || 3, o = fs.offset || 0;
-    // A field with several widgets (like a radio group) shares one rect, so it can't grow safely.
-    if (f.type === "radiobutton" || f.page instanceof Array) o = 0;
-    var fo = ["// Form Fixer: focus highlight", "event.target.borderStyle = border.s;", "event.target.lineWidth = " + w + ";",
-        "event.target.strokeColor = " + JSON.stringify(["RGB", rgb[0] / 255, rgb[1] / 255, rgb[2] / 255]) + ";"];
-    var bl = ["// Form Fixer: focus highlight", "event.target.strokeColor = " + JSON.stringify(f.strokeColor) + ";",
-        "event.target.lineWidth = " + Number(f.lineWidth) + ";", "event.target.borderStyle = " + FFX_q(f.borderStyle) + ";"];
-    if (o) {
-        var r = f.rect;
-        fo.push("event.target.rect = " + JSON.stringify([r[0] - o, r[1] + o, r[2] + o, r[3] - o]) + ";");
-        bl.push("event.target.rect = " + JSON.stringify([r[0], r[1], r[2], r[3]]) + ";");
+function FFX_ringStrips(r, w, o) {
+    var x1 = Math.min(r[0], r[2]), x2 = Math.max(r[0], r[2]), y1 = Math.min(r[1], r[3]), y2 = Math.max(r[1], r[3]);
+    var ix1 = x1 - o, ix2 = x2 + o, iy1 = y1 - o, iy2 = y2 + o, ox1 = ix1 - w, ox2 = ix2 + w, oy1 = iy1 - w, oy2 = iy2 + w;
+    return [[ox1, oy2, ox2, iy2], [ox1, iy1, ox2, oy1], [ox1, iy2, ix1, iy1], [ix2, iy2, ox2, iy1]];
+}
+
+function FFX_focusActions(doc, f, name, fs, n) {
+    var ring = FFX_RING + "." + n, w = fs.width || 3, o = fs.offset || 0, rgb = fs.rgb;
+    var pages = f.page instanceof Array ? f.page : [f.page];
+    for (var i = 0; i < pages.length; i++) {
+        var wid = pages.length > 1 ? doc.getField(name + "." + i) : f;
+        var strips = FFX_ringStrips(wid.rect, w, o);
+        for (var k = 0; k < strips.length; k++) {
+            var g = doc.addField(ring, "button", pages[i], strips[k]);
+            g = g || doc.getField(ring);
+            g.fillColor = ["RGB", rgb[0] / 255, rgb[1] / 255, rgb[2] / 255];
+            g.strokeColor = ["T"];
+            g.lineWidth = 0;
+            g.readonly = true;
+            g.display = display.hidden;
+        }
     }
-    return { OnFocus: fo.join("\n"), OnBlur: bl.join("\n") };
+    var get = "this.getField(" + FFX_q(ring) + ")";
+    return { OnFocus: "// Form Fixer: focus highlight\n" + get + ".display = display.noPrint;",
+        OnBlur: "// Form Fixer: focus highlight\n" + get + ".display = display.hidden;" };
 }
 
 function FFX_apply(doc, quiet) {
@@ -95,7 +109,12 @@ function FFX_apply(doc, quiet) {
         alert("This PDF has no Form Fixer settings. In InDesign, run Form Fixer, save your settings, and export the PDF again.", 3);
         return { applied: [], missing: [], errors: [] };
     }
-    var applied = [], missing = [], errors = [];
+    var applied = [], missing = [], errors = [], rings = 0, others = [];
+    try { if (doc.getField(FFX_RING)) doc.removeField(FFX_RING); } catch (e0) { }
+    if (cfg.focus) for (var i = 0; i < doc.numFields; i++) {
+        var fn = doc.getNthFieldName(i);
+        if (fn.split(".")[0] !== FFX_RING && !(cfg.fields && cfg.fields.hasOwnProperty(fn))) others.push(fn);
+    }
     for (var name in cfg.fields) {
         if (!cfg.fields.hasOwnProperty(name)) continue;
         var s = cfg.fields[name], f = doc.getField(name);
@@ -151,7 +170,7 @@ function FFX_apply(doc, quiet) {
             }
             var fs = FFX_focusFor(cfg, s);
             if (fs || (s.focus && s.focus.off)) {
-                var fa = fs ? FFX_focusActions(f, fs) : { OnFocus: "", OnBlur: "" };
+                var fa = fs ? FFX_focusActions(doc, f, name, fs, rings++) : { OnFocus: "", OnBlur: "" };
                 actions.OnFocus = [fa.OnFocus, actions.OnFocus || ""].join("\n").replace(/^\n+|\n+$/g, "");
                 actions.OnBlur = [fa.OnBlur, actions.OnBlur || ""].join("\n").replace(/^\n+|\n+$/g, "");
             }
@@ -162,19 +181,15 @@ function FFX_apply(doc, quiet) {
         }
     }
     var focused = 0;
-    if (cfg.focus) {
-        for (var i = 0; i < doc.numFields; i++) {
-            var fn = doc.getNthFieldName(i);
-            if (cfg.fields && cfg.fields.hasOwnProperty(fn)) continue;
-            var g = doc.getField(fn);
-            if (!g) continue;
-            try {
-                var ga = FFX_focusActions(g, cfg.focus);
-                g.setAction("OnFocus", ga.OnFocus);
-                g.setAction("OnBlur", ga.OnBlur);
-                focused++;
-            } catch (e3) { errors.push(fn + ": " + e3); }
-        }
+    for (var j = 0; j < others.length; j++) {
+        var g = doc.getField(others[j]);
+        if (!g) continue;
+        try {
+            var ga = FFX_focusActions(doc, g, others[j], cfg.focus, rings++);
+            g.setAction("OnFocus", ga.OnFocus);
+            g.setAction("OnBlur", ga.OnBlur);
+            focused++;
+        } catch (e3) { errors.push(others[j] + ": " + e3); }
     }
     try { doc.calculateNow(); } catch (e) { }
     var msg = "Applied settings to " + applied.length + " field" + (applied.length === 1 ? "" : "s") + ".";

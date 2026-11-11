@@ -555,7 +555,7 @@ FFX.showDialog = function (doc, autoClose) {
         c.width.helpTip = what + " highlight width";
         row.add("statictext", undefined, "Offset:");
         c.offset = row.add("dropdownlist", undefined, sizes);
-        c.offset.helpTip = what + " highlight offset. Grows the field so the highlight sits outside it.";
+        c.offset.helpTip = what + " highlight offset: space between the field and the ring.";
         c.contrast = parent.add("statictext", undefined, "", { truncate: "end" });
         c.contrast.preferredSize.width = 500;
         c.row = row;
@@ -571,7 +571,7 @@ FFX.showDialog = function (doc, autoClose) {
     var docFocusPanel = focusPanel.add("panel", undefined, "Every field in this document");
     docFocusPanel.alignChildren = ["left", "top"];
     var docFocus = focusControls(docFocusPanel, "Document");
-    focusPanel.add("statictext", undefined, "Offset grows the field while it has focus, so the highlight sits outside it. Radio buttons ignore offset.", { multiline: true }).preferredSize.width = 520;
+    focusPanel.add("statictext", undefined, "The highlight is a ring drawn around the field. Offset is the space between the field and the ring.", { multiline: true }).preferredSize.width = 520;
     focusPanel.add("statictext", undefined, "Works in Acrobat and Acrobat Reader. Most browser PDF viewers ignore it.", { multiline: true }).preferredSize.width = 520;
 
     function focusChoiceList() {
@@ -701,10 +701,9 @@ FFX.showDialog = function (doc, autoClose) {
     function focusContrastText(c) {
         var f = readFocusUI(c);
         if (!cur || !f) return "";
-        var outside = f.offset > 0 && byName[cur].type !== "RadioButton";
-        var ratio = FFX.contrast(f.rgb, outside ? [255, 255, 255] : FFX.fillRGB(byName[cur].item));
+        var ratio = FFX.contrast(f.rgb, [255, 255, 255]);
         var shown = Math.floor(ratio * 10) / 10;
-        return "Contrast with " + (outside ? "a white page: " : "this field's fill: ") + shown + ":1" + (ratio < 3 ? ". Focus indicators need at least 3:1." : ".");
+        return "Contrast with a white page: " + shown + ":1" + (ratio < 3 ? ". Focus indicators need at least 3:1." : ".");
     }
 
     function refreshFocusContrast() {
