@@ -65,21 +65,33 @@ function FFX_dependencyCode(children) {
 }
 
 // Acrobat has no focused appearance state, so the border changes while the field has focus.
-function FFX_focusCode(rgb) {
-    var c = ["RGB", rgb[0] / 255, rgb[1] / 255, rgb[2] / 255];
-    return "// Form Fixer: focus highlight\nevent.target.borderStyle = border.s;\nevent.target.lineWidth = 3;\nevent.target.strokeColor = " + JSON.stringify(c) + ";";
+// A field's own setting wins over the document setting; { off: true } turns it off.
+function FFX_focusFor(cfg, s) {
+    if (s && s.focus) return s.focus.off ? null : s.focus;
+    return cfg.focus || null;
 }
 
-function FFX_blurCode(f) {
-    return "// Form Fixer: focus highlight\nevent.target.strokeColor = " + JSON.stringify(f.strokeColor) +
-        ";\nevent.target.lineWidth = " + Number(f.lineWidth) + ";\nevent.target.borderStyle = " + FFX_q(f.borderStyle) + ";";
+function FFX_focusActions(f, fs) {
+    var rgb = fs.rgb, w = fs.width || 3, o = fs.offset || 0;
+    // A field with several widgets (like a radio group) shares one rect, so it can't grow safely.
+    if (f.type === "radiobutton" || f.page instanceof Array) o = 0;
+    var fo = ["// Form Fixer: focus highlight", "event.target.borderStyle = border.s;", "event.target.lineWidth = " + w + ";",
+        "event.target.strokeColor = " + JSON.stringify(["RGB", rgb[0] / 255, rgb[1] / 255, rgb[2] / 255]) + ";"];
+    var bl = ["// Form Fixer: focus highlight", "event.target.strokeColor = " + JSON.stringify(f.strokeColor) + ";",
+        "event.target.lineWidth = " + Number(f.lineWidth) + ";", "event.target.borderStyle = " + FFX_q(f.borderStyle) + ";"];
+    if (o) {
+        var r = f.rect;
+        fo.push("event.target.rect = " + JSON.stringify([r[0] - o, r[1] + o, r[2] + o, r[3] - o]) + ";");
+        bl.push("event.target.rect = " + JSON.stringify([r[0], r[1], r[2], r[3]]) + ";");
+    }
+    return { OnFocus: fo.join("\n"), OnBlur: bl.join("\n") };
 }
 
 function FFX_apply(doc, quiet) {
     doc = doc || this;
     var alert = quiet ? function () { } : function (m, i) { app.alert(m, i); };
     var cfg = FFX_readConfig(doc.metadata);
-    if (!cfg || !cfg.fields) {
+    if (!cfg || (!cfg.fields && !cfg.focus)) {
         alert("This PDF has no Form Fixer settings. In InDesign, run Form Fixer, save your settings, and export the PDF again.", 3);
         return { applied: [], missing: [], errors: [] };
     }
@@ -137,9 +149,11 @@ function FFX_apply(doc, quiet) {
                     child.setItems(s.children.placeholder ? [s.children.placeholder].concat(start) : start);
                 }
             }
-            if (s.focus && s.focus.rgb) {
-                actions.OnFocus = FFX_focusCode(s.focus.rgb) + (actions.OnFocus ? "\n" + actions.OnFocus : "");
-                actions.OnBlur = FFX_blurCode(f) + (actions.OnBlur ? "\n" + actions.OnBlur : "");
+            var fs = FFX_focusFor(cfg, s);
+            if (fs || (s.focus && s.focus.off)) {
+                var fa = fs ? FFX_focusActions(f, fs) : { OnFocus: "", OnBlur: "" };
+                actions.OnFocus = [fa.OnFocus, actions.OnFocus || ""].join("\n").replace(/^\n+|\n+$/g, "");
+                actions.OnBlur = [fa.OnBlur, actions.OnBlur || ""].join("\n").replace(/^\n+|\n+$/g, "");
             }
             for (var a in actions) if (actions.hasOwnProperty(a)) f.setAction(a, actions[a]);
             applied.push(name);
@@ -147,8 +161,24 @@ function FFX_apply(doc, quiet) {
             errors.push(name + ": " + e);
         }
     }
+    var focused = 0;
+    if (cfg.focus) {
+        for (var i = 0; i < doc.numFields; i++) {
+            var fn = doc.getNthFieldName(i);
+            if (cfg.fields && cfg.fields.hasOwnProperty(fn)) continue;
+            var g = doc.getField(fn);
+            if (!g) continue;
+            try {
+                var ga = FFX_focusActions(g, cfg.focus);
+                g.setAction("OnFocus", ga.OnFocus);
+                g.setAction("OnBlur", ga.OnBlur);
+                focused++;
+            } catch (e3) { errors.push(fn + ": " + e3); }
+        }
+    }
     try { doc.calculateNow(); } catch (e) { }
     var msg = "Applied settings to " + applied.length + " field" + (applied.length === 1 ? "" : "s") + ".";
+    if (focused) msg += "\nAdded the focus highlight to " + focused + " other field" + (focused === 1 ? "" : "s") + ".";
     if (missing.length) msg += "\n\nFields not found (renamed or deleted?):\n" + missing.join("\n");
     if (errors.length) msg += "\n\nProblems:\n" + errors.join("\n");
     msg += "\n\nSave the PDF to keep these changes.";

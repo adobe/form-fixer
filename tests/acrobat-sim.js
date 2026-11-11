@@ -15,7 +15,7 @@ const fs = require("fs"), vm = require("vm"), assert = require("assert");
 const alerts = [];
 function makeField(name, type, value) {
   return { name, type, value, actions: {}, items: null, comb: false, charLimit: 0, multiline: true,
-    strokeColor: ["T"], lineWidth: 1, borderStyle: "solid",
+    strokeColor: ["T"], lineWidth: 1, borderStyle: "solid", rect: [10, 50, 110, 30], page: 0,
     setAction(t, c) { this.actions[t] = c; }, setItems(a) { this.items = a; } };
 }
 const fields = {
@@ -27,9 +27,11 @@ const fields = {
   "Combo Box 1": makeField("Combo Box 1", "combobox", "Select one"),
   "Town": makeField("Town", "text", ""),
   "Agree": makeField("Agree", "checkbox", "Off"),
+  "Not managed": makeField("Not managed", "text", ""),
 };
 let calcs = 0;
-const doc = { calculateNow() { calcs++; }, metadata: fs.readFileSync(__dirname + "/sample-xmp.xml", "utf8"), getField: n => fields[n] || null };
+const doc = { calculateNow() { calcs++; }, metadata: fs.readFileSync(__dirname + "/sample-xmp.xml", "utf8"), getField: n => fields[n] || null,
+  get numFields() { return Object.keys(fields).length; }, getNthFieldName: i => Object.keys(fields)[i] };
 const ctx = { app: { alert: m => alerts.push(m), addToolButton() {}, addMenuItem() {} }, JSON, event: {} };
 vm.createContext(ctx);
 vm.runInContext(fs.readFileSync(__dirname + "/../acrobat/Form Fixer.js", "utf8"), ctx);
@@ -62,14 +64,21 @@ assert.deepStrictEqual([...fields["Combo Box 1"].items], ["Select one"]);
 const ks = new Function("event", fields["Zip code"].actions.Keystroke);
 let e1 = { willCommit: false, change: "7", rc: true }; ks(e1); assert.strictEqual(e1.rc, true);
 let e2 = { willCommit: false, change: "a", rc: true }; ks(e2); assert.strictEqual(e2.rc, false);
-// Focus highlight: thick border on focus, original border restored on blur, user code kept
+// Focus highlight: field setting wins, document setting covers other fields, "off" opts out
 const agree = fields["Agree"], border = { s: "solid" };
 new Function("event", "border", agree.actions.OnFocus)({ target: agree }, border);
-assert.deepStrictEqual([...agree.strokeColor], ["RGB", 0, 0.4, 0.8]); assert.strictEqual(agree.lineWidth, 3);
+assert.deepStrictEqual([...agree.strokeColor], ["RGB", 0, 0.4, 0.8]); assert.strictEqual(agree.lineWidth, 4);
+assert.deepStrictEqual([...agree.rect], [8, 52, 112, 28]);
 assert.ok(agree.actions.OnBlur.endsWith("app.beep(0);"));
 new Function("event", "app", agree.actions.OnBlur)({ target: agree }, { beep() {} });
 assert.deepStrictEqual([...agree.strokeColor], ["T"]); assert.strictEqual(agree.lineWidth, 1);
-assert.strictEqual(fields["Town"].actions.OnFocus, undefined);
+assert.deepStrictEqual([...agree.rect], [10, 50, 110, 30]);
+assert.strictEqual(fields["Town"].actions.OnFocus, "");
+const other = fields["Not managed"];
+new Function("event", "border", other.actions.OnFocus)({ target: other }, border);
+assert.deepStrictEqual([...other.strokeColor], ["RGB", 0, 0, 0]); assert.strictEqual(other.lineWidth, 2);
+assert.deepStrictEqual([...other.rect], [10, 50, 110, 30]);
+assert.ok(fields["Zip code"].actions.OnFocus.includes("lineWidth = 2"));
 // No settings case
 const r2 = ctx.FFX_apply({ metadata: "<x:xmpmeta/>", getField: () => null });
 assert.strictEqual(r2.applied.length, 0);

@@ -121,6 +121,15 @@ FFX.isEmpty = function (o) {
     return true;
 };
 
+// Focus highlight: { off: true } turns it off for one field; otherwise color, width (1 to 6 pt), and offset (0 to 6 pt).
+FFX.cleanFocus = function (f) {
+    if (!f) return null;
+    if (f.off === true) return { off: true };
+    if (!f.rgb || f.rgb.length !== 3) return null;
+    var w = Math.round(Number(f.width)), o = Math.round(Number(f.offset));
+    return { name: f.name, rgb: f.rgb, width: w >= 1 && w <= 6 ? w : 3, offset: o >= 0 && o <= 6 ? o : 0 };
+};
+
 FFX.clean = function (s) {
     // Drop empty parts so the stored settings stay small.
     if (!s) return null;
@@ -133,7 +142,8 @@ FFX.clean = function (s) {
     if (s.editable === true) out.editable = true;
     if (typeof s.defaultValue === "string" && s.defaultValue !== "") out.defaultValue = s.defaultValue;
     if (s.textColor && s.textColor.rgb && s.textColor.rgb.length === 3) out.textColor = { name: s.textColor.name, rgb: s.textColor.rgb };
-    if (s.focus && s.focus.rgb && s.focus.rgb.length === 3) out.focus = { name: s.focus.name, rgb: s.focus.rgb };
+    var fc = FFX.cleanFocus(s.focus);
+    if (fc) out.focus = fc;
     if (s.actions) {
         var acts = {};
         for (var k in s.actions) if (s.actions.hasOwnProperty(k) && FFX.trim(s.actions[k]) !== "") acts[k] = s.actions[k];
@@ -164,6 +174,17 @@ FFX.readItem = function (item) {
     return s || {};
 };
 
+FFX.DOC_LABEL = "ffxdoc";
+
+FFX.readDoc = function (doc) {
+    return FFX.parse(doc.extractLabel(FFX.DOC_LABEL)) || {};
+};
+
+FFX.writeDoc = function (doc, d) {
+    var f = FFX.cleanFocus(d && d.focus);
+    doc.insertLabel(FFX.DOC_LABEL, f && !f.off ? FFX.stringify({ focus: f }) : "");
+};
+
 FFX.writeItem = function (item, settings) {
     var c = FFX.clean(settings);
     item.insertLabel(FFX.LABEL, c ? FFX.stringify(c) : "");
@@ -190,7 +211,9 @@ FFX.sync = function (doc) {
         var name = fields[i].name;
         if (s && !cfg.fields[name]) { cfg.fields[name] = s; n++; }
     }
-    var value = n ? FFX.stringify(cfg) : "";
+    var df = FFX.cleanFocus(FFX.readDoc(doc).focus);
+    if (df && !df.off) cfg.focus = df;
+    var value = n || cfg.focus ? FFX.stringify(cfg) : "";
     if (doc.metadataPreferences.getProperty(FFX.NS, FFX.PROP) !== value) {
         doc.metadataPreferences.setProperty(FFX.NS, FFX.PROP, value);
     }
@@ -518,17 +541,64 @@ FFX.showDialog = function (doc, autoClose) {
     calcPanel.add("statictext", undefined, "Tip: make the total field read only and give it a number format.");
 
     var focusPanel = section("Focus");
-    focusPanel.alignChildren = ["left", "top"];
-    var focusRow = focusPanel.add("group");
-    focusRow.add("statictext", undefined, "Focus highlight:");
-    var focusList = focusRow.add("dropdownlist", undefined, []);
-    focusList.preferredSize.width = 240;
-    focusList.helpTip = "Focus highlight color";
-    var focusContrast = focusPanel.add("statictext", undefined, "", { truncate: "end" });
-    focusContrast.preferredSize.width = 520;
-    focusPanel.add("statictext", undefined, "Adds a thick border inside the field while it has keyboard focus.", { multiline: true }).preferredSize.width = 520;
+    focusPanel.alignChildren = ["fill", "top"];
+    function focusControls(parent, what) {
+        var row = parent.add("group"), c = { choices: [] };
+        row.add("statictext", undefined, "Color:");
+        c.color = row.add("dropdownlist", undefined, []);
+        c.color.preferredSize.width = 170;
+        c.color.helpTip = what + " highlight color";
+        var sizes = [];
+        for (var z = 0; z <= 6; z++) sizes.push(z + " pt");
+        row.add("statictext", undefined, "Width:");
+        c.width = row.add("dropdownlist", undefined, sizes.slice(1));
+        c.width.helpTip = what + " highlight width";
+        row.add("statictext", undefined, "Offset:");
+        c.offset = row.add("dropdownlist", undefined, sizes);
+        c.offset.helpTip = what + " highlight offset. Grows the field so the highlight sits outside it.";
+        c.contrast = parent.add("statictext", undefined, "", { truncate: "end" });
+        c.contrast.preferredSize.width = 500;
+        c.row = row;
+        return c;
+    }
+    var fieldFocusPanel = focusPanel.add("panel", undefined, "This field");
+    fieldFocusPanel.alignChildren = ["left", "top"];
+    var focusModeRow = fieldFocusPanel.add("group");
+    focusModeRow.add("statictext", undefined, "Highlight:");
+    var focusMode = focusModeRow.add("dropdownlist", undefined, ["Use the document setting", "Custom for this field", "No highlight"]);
+    focusMode.helpTip = "Focus highlight for this field";
+    var fieldFocus = focusControls(fieldFocusPanel, "This field's");
+    var docFocusPanel = focusPanel.add("panel", undefined, "Every field in this document");
+    docFocusPanel.alignChildren = ["left", "top"];
+    var docFocus = focusControls(docFocusPanel, "Document");
+    focusPanel.add("statictext", undefined, "Offset grows the field while it has focus, so the highlight sits outside it. Radio buttons ignore offset.", { multiline: true }).preferredSize.width = 520;
     focusPanel.add("statictext", undefined, "Works in Acrobat and Acrobat Reader. Most browser PDF viewers ignore it.", { multiline: true }).preferredSize.width = 520;
-    var focusChoices = [];
+
+    function focusChoiceList() {
+        var list = FFX.textColorChoices(doc);
+        list[0] = { name: "None", rgb: null };
+        try { var blk = FFX.swatchRGB(doc.swatches.item("Black")); if (blk) list.splice(1, 0, { name: "Black", rgb: blk }); } catch (eb) { }
+        return list;
+    }
+    function setFocusUI(c, f) {
+        c.choices = focusChoiceList();
+        var idx = 0;
+        if (f && f.rgb) {
+            for (var j = 1; j < c.choices.length; j++) if (c.choices[j].name === f.name) idx = j;
+            if (!idx) { c.choices.push({ name: f.name + " (saved)", rgb: f.rgb }); idx = c.choices.length - 1; }
+        }
+        c.color.removeAll();
+        for (var k = 0; k < c.choices.length; k++) c.color.add("item", c.choices[k].name);
+        c.color.selection = idx;
+        c.width.selection = (f && f.width ? f.width : 3) - 1;
+        c.offset.selection = f && f.offset ? f.offset : 0;
+    }
+    function readFocusUI(c) {
+        var i = c.color.selection ? c.color.selection.index : 0;
+        if (!i || !c.choices[i]) return null;
+        return { name: c.choices[i].name, rgb: c.choices[i].rgb, width: c.width.selection.index + 1, offset: c.offset.selection.index };
+    }
+    setFocusUI(docFocus, FFX.readDoc(doc).focus);
 
     var jsPanel = section("JavaScript");
     jsPanel.alignChildren = ["fill", "top"];
@@ -598,6 +668,7 @@ FFX.showDialog = function (doc, autoClose) {
                 try { if (grp.items[r].isValid) FFX.writeItem(grp.items[r], work[names[q]]); } catch (err) { }
             }
         }
+        FFX.writeDoc(doc, { focus: readFocusUI(docFocus) });
         dirty = false;
     }
 
@@ -623,16 +694,24 @@ FFX.showDialog = function (doc, autoClose) {
             var ci = colorList.selection ? colorList.selection.index : 0;
             if (ci > 0 && colorChoices[ci]) s.textColor = { name: colorChoices[ci].name, rgb: colorChoices[ci].rgb }; else delete s.textColor;
         }
-        var fi = focusList.selection ? focusList.selection.index : 0;
-        if (fi > 0 && focusChoices[fi]) s.focus = { name: focusChoices[fi].name, rgb: focusChoices[fi].rgb }; else delete s.focus;
+        var fm = focusMode.selection ? focusMode.selection.index : 0, ff = readFocusUI(fieldFocus);
+        if (fm === 1 && ff) s.focus = ff; else if (fm === 2) s.focus = { off: true }; else delete s.focus;
+    }
+
+    function focusContrastText(c) {
+        var f = readFocusUI(c);
+        if (!cur || !f) return "";
+        var outside = f.offset > 0 && byName[cur].type !== "RadioButton";
+        var ratio = FFX.contrast(f.rgb, outside ? [255, 255, 255] : FFX.fillRGB(byName[cur].item));
+        var shown = Math.floor(ratio * 10) / 10;
+        return "Contrast with " + (outside ? "a white page: " : "this field's fill: ") + shown + ":1" + (ratio < 3 ? ". Focus indicators need at least 3:1." : ".");
     }
 
     function refreshFocusContrast() {
-        var fi = focusList.selection ? focusList.selection.index : 0;
-        if (!cur || !fi || !focusChoices[fi]) { focusContrast.text = ""; return; }
-        var ratio = FFX.contrast(focusChoices[fi].rgb, FFX.fillRGB(byName[cur].item));
-        var shown = Math.floor(ratio * 10) / 10;
-        focusContrast.text = "Contrast with the field fill: " + shown + ":1" + (ratio < 3 ? ". Focus indicators need at least 3:1." : ".");
+        var fm = focusMode.selection ? focusMode.selection.index : 0;
+        fieldFocus.row.enabled = fm === 1;
+        fieldFocus.contrast.text = fm === 1 ? focusContrastText(fieldFocus) : "";
+        docFocus.contrast.text = focusContrastText(docFocus);
     }
 
     function refreshContrast() {
@@ -770,17 +849,8 @@ FFX.showDialog = function (doc, autoClose) {
         for (var cj = 0; cj < colorChoices.length; cj++) colorList.add("item", colorChoices[cj].name);
         colorList.selection = colorIdx;
         refreshContrast();
-        focusChoices = FFX.textColorChoices(doc);
-        focusChoices[0] = { name: "None", rgb: null };
-        try { var blk = FFX.swatchRGB(doc.swatches.item("Black")); if (blk) focusChoices.splice(1, 0, { name: "Black", rgb: blk }); } catch (eb) { }
-        var focusIdx = 0;
-        if (s.focus && s.focus.rgb) {
-            for (var fj = 1; fj < focusChoices.length; fj++) if (focusChoices[fj].name === s.focus.name) focusIdx = fj;
-            if (!focusIdx) { focusChoices.push({ name: s.focus.name + " (saved)", rgb: s.focus.rgb }); focusIdx = focusChoices.length - 1; }
-        }
-        focusList.removeAll();
-        for (var fk = 0; fk < focusChoices.length; fk++) focusList.add("item", focusChoices[fk].name);
-        focusList.selection = focusIdx;
+        focusMode.selection = s.focus ? (s.focus.off ? 2 : 1) : 0;
+        setFocusUI(fieldFocus, s.focus && !s.focus.off ? s.focus : readFocusUI(docFocus));
         refreshFocusContrast();
         formatPanel.enabled = isText;
         loadChoices();
@@ -861,7 +931,8 @@ FFX.showDialog = function (doc, autoClose) {
     alignList.onChange = function () { dirty = true; };
     defaultBox.onChanging = function () { dirty = true; };
     colorList.onChange = function () { refreshContrast(); dirty = true; };
-    focusList.onChange = function () { refreshFocusContrast(); dirty = true; };
+    focusMode.onChange = fieldFocus.color.onChange = fieldFocus.width.onChange = fieldFocus.offset.onChange =
+        docFocus.color.onChange = docFocus.width.onChange = docFocus.offset.onChange = function () { refreshFocusContrast(); dirty = true; };
 
     snipBtn.onClick = function () {
         if (!snipList.selection) return;
@@ -942,7 +1013,8 @@ FFX.showDialog = function (doc, autoClose) {
         if (!doc.isValid) { status.text = "The document was closed. Close this panel."; return; }
         saveAll();
         var n = FFX.sync(doc);
-        status.text = n ? "Saved settings for " + n + " field" + (n === 1 ? "" : "s") + ". Export to Interactive PDF, then apply them in Acrobat." : "No settings to save.";
+        if (!n && FFX.readDoc(doc).focus) status.text = "Saved the document focus highlight. Export to Interactive PDF, then apply it in Acrobat.";
+        else status.text = n ? "Saved settings for " + n + " field" + (n === 1 ? "" : "s") + ". Export to Interactive PDF, then apply them in Acrobat." : "No settings to save.";
     };
 
     cancelBtn.onClick = function () { w.close(); };
