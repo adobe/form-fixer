@@ -12,12 +12,14 @@ Form Fixer adds PDF form settings that InDesign can't create on its own. You cho
 - **Choices:** export values for dropdowns and list boxes, and dropdowns where people can type their own answer
 - **Checks:** a number range, such as 18 to 99
 - **Totals:** sum, product, average, minimum, or maximum of other fields
-- **Focus highlight:** a colored ring that shows which field has keyboard focus, for one field or every field
+- **Focus highlight:** a keyboard focus ring with your choice of color, width, and offset, for one field or every field
 - **JavaScript:** your own code, for people who need it
 
 ## See it in action
 
 Download the [Form Fixer demo](samples/Form%20Fixer%20demo.pdf) and open it in Acrobat or Acrobat Reader. It has one labeled field for every setting, already applied, so you can try each one before you install anything.
+
+Press Tab to try the focus rings. The Focus examples compare a document-wide ring, a field-specific ring, and a field with no custom ring. The rings never print. Most browser PDF viewers ignore them.
 
 ## What you need
 

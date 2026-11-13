@@ -61,13 +61,13 @@ function heading(str) {
 
 function field(kind, name, settings, extra) {
     nextRow(30);
-    text(name, 11, y + 3, 36, 250);
+    text(name, 12, y + 3, 36, 250);
     var f = page[kind].add({ geometricBounds: [y, 260, y + 22, 560] });
     f.name = name;
     f.description = name;
     f.strokeWeight = 1;
     f.strokeColor = black;
-    if (f.hasOwnProperty("fontSize")) f.fontSize = 11;
+    if (f.hasOwnProperty("fontSize")) f.fontSize = 12;
     if (extra) extra(f);
     if (settings) FFX.writeItem(f, settings);
     inOrder(f);
@@ -77,7 +77,7 @@ function field(kind, name, settings, extra) {
 
 text("Form Fixer sample", 20, y, 36, 576, 1, "H1").texts[0].fontStyle = "Bold";
 y += 32;
-text("Each field below uses one Form Fixer setting. In Acrobat, choose Edit > Apply InDesign form settings, then open each field's properties.", 11, y, 36, 576, 2);
+text("Each field below uses one Form Fixer setting. In Acrobat, choose Edit > Apply InDesign form settings, then open each field's properties.", 12, y, 36, 576, 2);
 y += 36;
 
 heading("Choices (Options tab)");
@@ -121,6 +121,15 @@ field("textBoxes", "Total, sum of Price 1 and Price 2", { actions: { Keystroke: 
 
 heading("JavaScript (Actions tab)");
 field("textBoxes", "Mouse up JavaScript", { actions: { MouseUp: "app.alert(\"You selected this field.\");" } });
+
+nextRow(180);
+heading("Focus (Actions tab)");
+text("Press Tab in Acrobat or Reader. Compare the document ring, a custom ring, and no custom ring.", 12, y, 36, 576, 2);
+y += 40;
+FFX.writeDoc(doc, { focus: { name: "Dark blue", rgb: [0, 51, 102], width: 3, offset: 1 } });
+field("textBoxes", "Use the document focus ring", null);
+field("textBoxes", "Custom focus ring", { focus: { name: "Black", rgb: [0, 0, 0], width: 2, offset: 3 } });
+field("textBoxes", "No custom focus ring", { focus: { off: true } });
 
 FFX.sync(doc);
 FFX.removeExportHook();

@@ -62,6 +62,12 @@ Security issues shouldn't be reported on this issue tracker. Instead, [file an i
 
 Open Acrobat's JavaScript console (Command-J or Ctrl-J), paste the contents of `acrobat/Form Fixer.js`, run it, then run `FFX_apply(this);`.
 
+### Check the focus examples
+
+The sample generator sets a document-wide focus ring and adds fields that inherit it, override it, or turn the custom ring off. After rebuilding the PDFs, apply the settings only to the demo. Keep the sample unapplied so people can check their install.
+
+In Acrobat or Acrobat Reader, Tab through the Focus examples. Check that each ring appears only while its field has focus and does not print. Run `node tests/acrobat-sim.js` to check document defaults, field overrides, opt-outs, and reapplying settings.
+
 ### Looking into
 
 - Dependent dropdowns, where a choice in one dropdown changes the options in another. The Acrobat add-on still supports this for documents that already use it, but it's hidden from the InDesign panel until there's a clear use case.

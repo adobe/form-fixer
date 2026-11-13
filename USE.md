@@ -1,6 +1,6 @@
 # Use Form Fixer
 
-This guide shows how to add PDF form settings in InDesign that InDesign can't create on its own, such as phone number formats, comb fields, and totals. If you haven't installed Form Fixer yet, start with [Install Form Fixer](INSTALL.md).
+This guide shows how to add PDF form settings in InDesign that InDesign can't create on its own, such as phone number formats, comb fields, totals, and custom focus indicators. If you haven't installed Form Fixer yet, start with [Install Form Fixer](INSTALL.md).
 
 You'll work in three places:
 
@@ -45,6 +45,17 @@ Sections that don't apply to the selected field are dimmed. For example, **Choic
 | **Focus** | A colored ring that shows which field has keyboard focus. Choose its color, width, and offset (the space between the field and the ring). **Every field in this document** sets it for the whole form. **This field** can use that setting, use its own, or have no highlight. | Actions tab (On Focus and On Blur) |
 | **JavaScript** | Your own code, or a ready-made example such as an email check. Most people won't need this. | Format, Validate, Calculate, or Actions tab |
 
+### Set up focus indicators
+
+1. Choose **Focus** in the Form Fixer panel.
+2. Under **Every field in this document**, choose a **Color**, **Width**, and **Offset**. Offset is the space between the field and the ring. Choose **None** for the document color if you only want rings on individual fields.
+3. Under **This field**, choose **Use the document setting**, **Custom for this field**, or **No highlight**. For a custom ring, choose its color, width, and offset.
+4. Select **Save**, export the PDF, then apply the settings in Acrobat as described below.
+
+Width ranges from one to six points. Offset ranges from zero to six points. Form Fixer shows contrast against a white page; if your page has another background color, check the ring against that color too.
+
+The ring appears when a field has keyboard focus and disappears when focus leaves. It never prints. **No highlight** turns off Form Fixer's ring, not Acrobat's own focus indicator.
+
 ### Good to know
 
 - **Default value** is real text in the field, not a placeholder. It stays until someone changes it, so keep the field's visible label.
@@ -82,6 +93,7 @@ If Acrobat lists a field as not found, the field was renamed or deleted after yo
 - **Explain formats in the label.** If a field needs a set format, add a hint below the label that everyone can see, such as "MM/DD/YYYY" or "5 digits". Add the same hint to the field's **Description**, such as "Date signed, MM/DD/YYYY", so screen readers read it too.
 - **Describe comb fields.** Sighted people can see how many boxes a comb field has. Put the count in the **Description** too, such as "ZIP code, 5 digits".
 - **Check tag order.** If labels and fields read in the wrong order in Acrobat, use InDesign's **Articles** panel to set the reading order, then export again.
+- **Check focus indicators.** Open the finished PDF in Acrobat or Acrobat Reader and press Tab and Shift+Tab through fields and buttons. Check that the ring follows focus, stays visible, and does not overlap nearby labels or controls.
 - **Try the demo.** The [Form Fixer demo](samples/Form%20Fixer%20demo.pdf) has one labeled field for every setting, already applied. Fill it in to see each setting work, and open each field's properties in Acrobat to see what Form Fixer did.
 
 ## Keyboard and screen reader use

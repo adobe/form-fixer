@@ -103,6 +103,7 @@ Windows hides file extensions by default. If you see `Form Fixer` without `.jsx`
 1. Open `Form Fixer sample.pdf` from the ZIP in Acrobat.
 2. Choose **Edit > Apply InDesign form settings**. On Windows, select **Menu** first.
 3. Acrobat says how many fields it updated. Open any field's properties to see its settings.
+4. Press Tab to move through the fields. In the **Focus** examples, compare the document-wide ring, the field-specific ring, and the field with no custom ring.
 
 To see how the finished form should work, compare it with the [Form Fixer demo](samples/Form%20Fixer%20demo.pdf).
 
@@ -113,6 +114,7 @@ Next, follow [Use Form Fixer](USE.md) to add settings to your own form.
 - **The Acrobat menu command is missing.** Make sure Acrobat was closed while you copied the file, then open it again. Also check that **Preferences > JavaScript > Enable Acrobat JavaScript** is on.
 - **You can't find the Acrobat folder.** In Acrobat, press Command-J on Mac or Ctrl-J on Windows to open the JavaScript console. Type `app.getPath("user", "javascript")`, select it, and press Ctrl-Enter. Acrobat shows the folder to use.
 - **Form Fixer isn't in the InDesign Scripts panel.** Make sure the file is directly inside **Scripts Panel**, not inside another folder, and that its name ends in `.jsx`.
+- **Focus rings don't appear.** Use Acrobat or Acrobat Reader, not a browser PDF viewer, and make sure Acrobat JavaScript is enabled. Choose a focus color in Form Fixer, select **Save**, export again, and apply the settings in Acrobat. Check that the field is not set to **No highlight**.
 
 ## Remove Form Fixer
 

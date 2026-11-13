@@ -62,7 +62,15 @@ Notes:
 - In browse mode (VO+arrow keys), VoiceOver also stops on labels and help text. Tab skips them.
 - Only the selected section is read. Switch tabs to hear the others.
 - The Text section reads the contrast between the text color and the field's fill, just after the **Text color** menu.
+- The Focus section starts with **This field**, then **Every field in this document**. Each has Color, Width, and Offset menus. Under **This field**, the Highlight menu chooses the document setting, a custom ring, or no custom highlight. Color, Width, and Offset are dimmed unless you choose **Custom for this field**.
+- Focus contrast text follows each set of menus. The ratio is measured against a white page. Move to it with VO+arrow keys; it is not announced automatically when you change a color.
 - The status message isn't announced on its own. After you select **Save**, move to the end of the panel to hear it.
+
+## Try focus indicators in the finished PDF
+
+Open the [Form Fixer demo](samples/Form%20Fixer%20demo.pdf) in Acrobat or Acrobat Reader, not a browser. Press Tab or Shift+Tab to move between fields. The Focus examples show a document-wide ring, a field-specific ring, and a field without a custom ring.
+
+The ring follows keyboard focus and never prints. It is a visual aid, not a change to the field's screen reader name or tab order.
 
 ## Known limits
 
